@@ -7,7 +7,6 @@ from database import Base, engine, SessionLocal
 import models, auth_utils
 
 # ═══ DATABASE SYNC ═══
-# This ensures your Render PostgreSQL tables are created automatically
 try:
     Base.metadata.create_all(bind=engine)
 except Exception as e:
@@ -16,21 +15,19 @@ except Exception as e:
 app = FastAPI(title="Popote Boutique API")
 
 # ═══ ELITE CORS SETTINGS ═══
-# Updated guest list to allow your new Netlify frontend to talk to this API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://jazzy-fudge-55f084.netlify.app", # 🆕 Updated Netlify URL (No trailing slash)
-        "http://localhost:3000"                  # Local Development
+        "https://jazzy-fudge-55f084.netlify.app", # 🆕 Netlify Frontend
+        "http://localhost:3000"                  # Local Dev
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 🚀 TEMPORARY: Force Seed Admin on Render
-# Visit https://popote-backend.onrender.com/force-seed-admin once to ensure admin exists
-@app.get("/force-seed-admin")
+# 🚀 SEED ADMIN ROUTE (Now at /api/force-seed-admin)
+@app.get("/api/force-seed-admin")
 def seed():
     db = SessionLocal()
     email = "admin@popote.com"
@@ -42,21 +39,17 @@ def seed():
         )
         db.add(new_user)
         db.commit()
-        db.refresh(new_user)
         return {"status": "Admin created successfully"}
     return {"status": "Admin already exists"}
 
-# Registering Routers
-app.include_router(auth.router)
-app.include_router(users.router)
-app.include_router(listings.router)
-app.include_router(enquiries.router)
-app.include_router(contact.router)
+# ═══ ROUTERS WITH /api PREFIX ═══
+# This fixes your 404 errors by matching the frontend's expectations
+app.include_router(auth.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
+app.include_router(listings.router, prefix="/api")
+app.include_router(enquiries.router, prefix="/api")
+app.include_router(contact.router, prefix="/api")
 
 @app.get("/")
 def root():
-    return {
-        "message": "Popote Boutique API is live",
-        "status": "Operational",
-        "environment": "Render Cloud"
-    }
+    return {"message": "Boutique API is live", "hint": "Use /api prefix for routes"}
