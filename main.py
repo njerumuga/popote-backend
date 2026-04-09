@@ -6,7 +6,8 @@ from routers import listings, users, enquiries, auth, contact
 from database import Base, engine, SessionLocal
 import models, auth_utils
 
-# Sync Database Tables
+# ═══ DATABASE SYNC ═══
+# This ensures your Render PostgreSQL tables are created automatically
 try:
     Base.metadata.create_all(bind=engine)
 except Exception as e:
@@ -14,15 +15,22 @@ except Exception as e:
 
 app = FastAPI(title="Popote Boutique API")
 
+# ═══ ELITE CORS SETTINGS ═══
+# We've added your Netlify URL here to allow the frontend to talk to this API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://popote-frontend-react.vercel.app", "http://localhost:3000"],
+    allow_origins=[
+        "https://dulcet-sunflower-998165.netlify.app", # 🆕 New Netlify Frontend
+
+        "http://localhost:3000"                        # Local Development
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # 🚀 TEMPORARY: Force Seed Admin on Render
+# Visit https://popote-backend.onrender.com/force-seed-admin once to ensure admin exists
 @app.get("/force-seed-admin")
 def seed():
     db = SessionLocal()
@@ -35,9 +43,11 @@ def seed():
         )
         db.add(new_user)
         db.commit()
+        db.refresh(new_user)
         return {"status": "Admin created successfully"}
     return {"status": "Admin already exists"}
 
+# Registering Routers
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(listings.router)
@@ -46,4 +56,8 @@ app.include_router(contact.router)
 
 @app.get("/")
 def root():
-    return {"message": "Boutique API is live"}
+    return {
+        "message": "Popote Boutique API is live",
+        "status": "Operational",
+        "environment": "Render Cloud"
+    }
