@@ -16,13 +16,12 @@ except Exception as e:
 app = FastAPI(title="Popote Boutique API")
 
 # ═══ ELITE CORS SETTINGS ═══
-# We've added your Netlify URL here to allow the frontend to talk to this API
+# Updated guest list to allow your new Netlify frontend to talk to this API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://dulcet-sunflower-998165.netlify.app", # 🆕 New Netlify Frontend
-
-        "http://localhost:3000"                        # Local Development
+        "https://jazzy-fudge-55f084.netlify.app", # 🆕 Updated Netlify URL (No trailing slash)
+        "http://localhost:3000"                  # Local Development
     ],
     allow_credentials=True,
     allow_methods=["*"],
