@@ -1,12 +1,11 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from routers import listings, users, enquiries, auth, contact
+from routers import listings, enquiries, auth, contact
 from database import Base, engine, SessionLocal
 import models, auth_utils
 
-# ═══ DATABASE SYNC ═══
+# Sync Database Tables
 try:
     Base.metadata.create_all(bind=engine)
 except Exception as e:
@@ -14,19 +13,18 @@ except Exception as e:
 
 app = FastAPI(title="Popote Boutique API")
 
-# ═══ ELITE CORS SETTINGS ═══
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://jazzy-fudge-55f084.netlify.app", # 🆕 Netlify Frontend
-        "http://localhost:3000"                  # Local Dev
+        "https://jazzy-fudge-55f084.netlify.app",
+        "http://localhost:3000"
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 🚀 SEED ADMIN ROUTE (Now at /api/force-seed-admin)
+# 🚀 Force Seed Admin (at /api/force-seed-admin)
 @app.get("/api/force-seed-admin")
 def seed():
     db = SessionLocal()
@@ -39,17 +37,15 @@ def seed():
         )
         db.add(new_user)
         db.commit()
-        return {"status": "Admin created successfully"}
-    return {"status": "Admin already exists"}
+        return {"status": "Admin created"}
+    return {"status": "Admin exists"}
 
-# ═══ ROUTERS WITH /api PREFIX ═══
-# This fixes your 404 errors by matching the frontend's expectations
+# Register Routers
 app.include_router(auth.router, prefix="/api")
-app.include_router(users.router, prefix="/api")
 app.include_router(listings.router, prefix="/api")
 app.include_router(enquiries.router, prefix="/api")
 app.include_router(contact.router, prefix="/api")
 
 @app.get("/")
 def root():
-    return {"message": "Boutique API is live", "hint": "Use /api prefix for routes"}
+    return {"message": "Boutique API is live", "hint": "Use /api prefix"}
