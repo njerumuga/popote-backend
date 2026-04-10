@@ -14,13 +14,13 @@ class Listing(Base):
     title = Column(String, index=True)
     description = Column(Text, nullable=True)
     price = Column(Float)
-    region = Column(String) # Nairobi, Mombasa, etc.
-    location = Column(String, nullable=True) # Karen, Westlands, etc.
-    category = Column(String) # For Sale, Rentals, Off-plan
+    region = Column(String)
+    location = Column(String, nullable=True)
+    category = Column(String)
     beds = Column(String, nullable=True)
     baths = Column(String, nullable=True)
     sqm = Column(String, nullable=True)
-    image_url = Column(Text) # stores "url1,url2,url3"
+    image_url = Column(Text) # Holds multiple URLs separated by commas
     youtube_url = Column(String, nullable=True)
     status = Column(String, default="approved")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

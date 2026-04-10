@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 import models
 
-# Cloudinary Config (Make sure these are in your Render Env Variables)
 cloudinary.config(
     cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME"),
     api_key = os.getenv("CLOUDINARY_API_KEY"),
@@ -24,11 +23,7 @@ def get_db():
     finally: db.close()
 
 @router.get("/")
-def get_listings(
-    category: Optional[str] = Query(None),
-    region: Optional[str] = Query(None),
-    db: Session = Depends(get_db)
-):
+def get_listings(category: Optional[str] = Query(None), region: Optional[str] = Query(None), db: Session = Depends(get_db)):
     query = db.query(models.Listing).filter(models.Listing.status == "approved")
     if category: query = query.filter(models.Listing.category == category)
     if region: query = query.filter(models.Listing.region == region)
@@ -46,21 +41,17 @@ async def create_listing(
     baths: Optional[str] = Form(None),
     sqm: Optional[str] = Form(None),
     location: Optional[str] = Form(None),
-    files: List[UploadFile] = File(...), # 📸 MULTI-IMAGE SUPPORT
+    files: List[UploadFile] = File(...), # 📸 Receives multiple images
     db: Session = Depends(get_db)
 ):
     uploaded_urls = []
-
+    # 🛠️ LOOP FIX: Upload every image selected
     for file in files:
         try:
-            result = cloudinary.uploader.upload(
-                file.file,
-                folder="popote_boutique",
-                transformation=[{'quality': "auto", 'fetch_format': "auto"}]
-            )
+            result = cloudinary.uploader.upload(file.file, folder="popote_boutique")
             uploaded_urls.append(result.get("secure_url"))
         except Exception as e:
-            print(f"Cloudinary Error: {e}")
+            print(f"Upload error: {e}")
 
     db_listing = models.Listing(
         title=title,
@@ -76,7 +67,6 @@ async def create_listing(
         image_url=",".join(uploaded_urls), # 🔗 Links joined by commas
         status="approved"
     )
-
     db.add(db_listing)
     db.commit()
     db.refresh(db_listing)
@@ -85,8 +75,7 @@ async def create_listing(
 @router.delete("/{listing_id}")
 def delete_listing(listing_id: int, db: Session = Depends(get_db)):
     db_listing = db.query(models.Listing).filter(models.Listing.id == listing_id).first()
-    if not db_listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
+    if not db_listing: raise HTTPException(status_code=404)
     db.delete(db_listing)
     db.commit()
     return {"message": "Listing removed"}
