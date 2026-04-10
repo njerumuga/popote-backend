@@ -1,6 +1,8 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 from routers import listings, enquiries, auth, contact
 from database import Base, engine, SessionLocal
 import models, auth_utils
@@ -24,23 +26,45 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 🚀 Force Seed Admin (at /api/force-seed-admin)
+def get_db():
+    db = SessionLocal()
+    try: yield db
+    finally: db.close()
+
+# 🛠️ THE MIGRATION FIX: Visit this to add missing columns (description, youtube, specs)
+@app.get("/api/fix-database-columns")
+def migrate_db(db: Session = Depends(get_db)):
+    try:
+        sql = """
+        ALTER TABLE listings 
+        ADD COLUMN IF NOT EXISTS description TEXT,
+        ADD COLUMN IF NOT EXISTS location VARCHAR,
+        ADD COLUMN IF NOT EXISTS beds VARCHAR,
+        ADD COLUMN IF NOT EXISTS baths VARCHAR,
+        ADD COLUMN IF NOT EXISTS sqm VARCHAR,
+        ADD COLUMN IF NOT EXISTS youtube_url VARCHAR,
+        ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'approved',
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+        """
+        db.execute(text(sql))
+        db.commit()
+        return {"status": "Success", "message": "Database columns updated."}
+    except Exception as e:
+        return {"status": "Error", "detail": str(e)}
+
+# 🚀 Force Seed Admin
 @app.get("/api/force-seed-admin")
 def seed():
     db = SessionLocal()
     email = "admin@popote.com"
     user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
-        new_user = models.User(
-            email=email,
-            password=auth_utils.get_password_hash("admin123")
-        )
+        new_user = models.User(email=email, password=auth_utils.get_password_hash("admin123"))
         db.add(new_user)
         db.commit()
-        return {"status": "Admin created"}
+        return {"status": "Admin created (admin123)"}
     return {"status": "Admin exists"}
 
-# Register Routers
 app.include_router(auth.router, prefix="/api")
 app.include_router(listings.router, prefix="/api")
 app.include_router(enquiries.router, prefix="/api")
@@ -48,4 +72,4 @@ app.include_router(contact.router, prefix="/api")
 
 @app.get("/")
 def root():
-    return {"message": "Boutique API is live", "hint": "Use /api prefix"}
+    return {"message": "Boutique API is live"}

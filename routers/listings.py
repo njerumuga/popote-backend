@@ -8,6 +8,14 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 import models
 
+# Cloudinary Config (Make sure these are in your Render Env Variables)
+cloudinary.config(
+    cloud_name = os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key = os.getenv("CLOUDINARY_API_KEY"),
+    api_secret = os.getenv("CLOUDINARY_API_SECRET"),
+    secure = True
+)
+
 router = APIRouter(prefix="/listings", tags=["Listings"])
 
 def get_db():
@@ -37,7 +45,8 @@ async def create_listing(
     beds: Optional[str] = Form(None),
     baths: Optional[str] = Form(None),
     sqm: Optional[str] = Form(None),
-    files: List[UploadFile] = File(...), # 📸 Supports multiple images
+    location: Optional[str] = Form(None),
+    files: List[UploadFile] = File(...), # 📸 MULTI-IMAGE SUPPORT
     db: Session = Depends(get_db)
 ):
     uploaded_urls = []
@@ -63,7 +72,8 @@ async def create_listing(
         beds=beds,
         baths=baths,
         sqm=sqm,
-        image_url=",".join(uploaded_urls), # Saves links as "link1,link2"
+        location=location,
+        image_url=",".join(uploaded_urls), # 🔗 Links joined by commas
         status="approved"
     )
 

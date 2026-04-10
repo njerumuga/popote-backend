@@ -15,13 +15,13 @@ class Listing(Base):
     description = Column(Text, nullable=True)
     price = Column(Float)
     region = Column(String) # Nairobi, Mombasa, etc.
-    location = Column(String, nullable=True) # Karen, Nyali, etc.
+    location = Column(String, nullable=True) # Karen, Westlands, etc.
     category = Column(String) # For Sale, Rentals, Off-plan
     beds = Column(String, nullable=True)
     baths = Column(String, nullable=True)
     sqm = Column(String, nullable=True)
     image_url = Column(Text) # stores "url1,url2,url3"
-    youtube_url = Column(String, nullable=True) # 🎥 New Field
+    youtube_url = Column(String, nullable=True)
     status = Column(String, default="approved")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
@@ -31,9 +31,9 @@ class Enquiry(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     phone = Column(String)
-    email = Column(String)
+    email = Column(String, nullable=True)
     property = Column(String)
-    message = Column(Text)
+    message = Column(Text, nullable=True)
     status = Column(String, default="New")
     date = Column(DateTime, default=datetime.datetime.utcnow)
 
